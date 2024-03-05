@@ -3,7 +3,7 @@ index 90c90471322..32b11915188 100644
 --- a/build-tools-internal/version.properties
 +++ b/build-tools-internal/version.properties
 @@ -1,8 +1,8 @@
- elasticsearch     = 7.17.7
+ elasticsearch     = 7.17.14
  lucene            = 8.11.1
  
 -bundled_jdk_vendor = openjdk
