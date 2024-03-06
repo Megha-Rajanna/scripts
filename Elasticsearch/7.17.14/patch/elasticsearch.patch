@@ -444,7 +444,7 @@ index 5078d946c12..44fff5761e8 100644
 -                // When building locally we always use snapshot artifacts even if passing `-Dbuild.snapshot=false`.
 -                // Release builds are always done with a local repo.
 -                artifact '/ml-cpp/[revision]-SNAPSHOT/downloads/ml-cpp/[module]-[revision]-SNAPSHOT(-[classifier]).[ext]'
-+              }
+              }
 -            }
 -          }
 +        patternLayout {
