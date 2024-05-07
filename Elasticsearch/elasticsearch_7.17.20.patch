@@ -1,18 +1,3 @@
-diff --git a/build-tools-internal/version.properties b/build-tools-internal/version.properties
-index df3879148a5..ed6d9897765 100644
---- a/build-tools-internal/version.properties
-+++ b/build-tools-internal/version.properties
-@@ -1,8 +1,8 @@
- elasticsearch     = 7.17.20
- lucene            = 8.11.3
- 
--bundled_jdk_vendor = openjdk
--bundled_jdk = 21.0.2+13@f2283984656d49d69e91c558476027ac
-+bundled_jdk_vendor = adoptium
-+bundled_jdk = 17.0.5+8
- # optional dependencies
- spatial4j         = 0.7
- jts               = 1.15.0
 diff --git a/build-tools/src/main/java/org/elasticsearch/gradle/Architecture.java b/build-tools/src/main/java/org/elasticsearch/gradle/Architecture.java
 index b506569c60c..37c4949ee4d 100644
 --- a/build-tools/src/main/java/org/elasticsearch/gradle/Architecture.java
