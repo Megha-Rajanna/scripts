@@ -81,7 +81,7 @@ function configureAndInstall() {
     printf -- 'Configuration and Installation started \n'
 
     # Install TensorFlow Transform
-    printf -- '\nInstalling %s..... \n' '$PACKAGE_NAME'
+    printf -- '\nInstalling %s..... \n' $PACKAGE_NAME
 
     # Install TensorFlow
     printf -- 'Installing TensorFlow... \n'
@@ -143,7 +143,7 @@ function configureAndInstall() {
 
     cd ../../python
     curl -o pyarrow.diff $PATCH_URL/pyarrow.diff
-    git apply ${CURDIR}/pyarrow.diff
+    git apply pyarrow.diff
     export PYARROW_WITH_PARQUET=1
     export PYARROW_PARALLEL=4
     sudo pip3 install -r requirements-build.txt
@@ -156,7 +156,7 @@ function configureAndInstall() {
     printf -- 'Installing Apache Beam... \n'
 
     cd "${CURDIR}"                         
-    sudo GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=True pip3 install numpy==1.24.3 scipy==1.10.1 'apache-beam[gcp]'==2.47.0
+    sudo GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=True pip3 install numpy==1.22.4 scipy==1.7.3 'apache-beam[gcp]'==2.47.0
 
     printf -- 'Apache Beam installed successfully \n'
 
