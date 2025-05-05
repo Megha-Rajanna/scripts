@@ -1,16 +1,3 @@
-diff --git a/foreign_cc/built_tools/cmake_build.bzl b/foreign_cc/built_tools/cmake_build.bzl
-index 5022504..9b5e2cd 100644
---- a/foreign_cc/built_tools/cmake_build.bzl
-+++ b/foreign_cc/built_tools/cmake_build.bzl
-@@ -8,7 +8,7 @@ def cmake_tool(name, srcs, **kwargs):
-     configure_make(
-         name = "{}.build".format(name),
-         configure_command = "bootstrap",
--        configure_options = ["--", "-DCMAKE_MAKE_PROGRAM=$$MAKE$$"],
-+        #configure_options = ["--", "-DCMAKE_MAKE_PROGRAM=$$MAKE$$"],
-         # On macOS at least -DDEBUG gets set for a fastbuild
-         copts = ["-UDEBUG"],
-         lib_source = srcs,
 diff --git a/toolchains/built_toolchains.bzl b/toolchains/built_toolchains.bzl
 index 4f32252..4215dc4 100644
 --- a/toolchains/built_toolchains.bzl
