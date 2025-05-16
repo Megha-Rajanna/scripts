@@ -70,8 +70,8 @@ index 42a2137221..fc1d608cbb 100644
          build_file_content = BUILD_ALL_CONTENT,
 -        patches = ["@envoy//bazel/foreign_cc:luajit.patch"],
 +        patches = ["@envoy//bazel/foreign_cc:luajit-s390x.patch",
-+                          "@envoy//bazel/foreign_cc:luajit.patch",
-+                  "@envoy//bazel/foreign_cc:luajit-as.patch",],
++                   "@envoy//bazel/foreign_cc:luajit.patch",
++                   "@envoy//bazel/foreign_cc:luajit-as.patch",],
          patch_args = ["-p1"],
          patch_cmds = ["chmod u+x build.py"],
      )
@@ -81,7 +81,7 @@ index 42a2137221..fc1d608cbb 100644
          name = "rules_foreign_cc",
 -        patches = ["@envoy//bazel:rules_foreign_cc.patch"],
 +        patches = ["@envoy//bazel:rules_foreign_cc.patch",
-+                  "@envoy//bazel:rules_foreign_cc-s390x.patch",],
++                   "@envoy//bazel:rules_foreign_cc-s390x.patch",],
          patch_args = ["-p1"],
      )
 
