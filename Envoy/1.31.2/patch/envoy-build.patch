@@ -47,7 +47,7 @@ index f97ff45b55..476c8b6ef5 100644
      out_include_dir = "include/luajit-2.1",
      out_static_libs = select({
 -        "//bazel:windows_x86_64": ["lua51.lib"],
-+       "//bazel:windows_x86_64": ["lua51.lib"],            
++        "//bazel:windows_x86_64": ["lua51.lib"],            
          "//conditions:default": ["libluajit-5.1.a"],
      }),
      targets = [],
