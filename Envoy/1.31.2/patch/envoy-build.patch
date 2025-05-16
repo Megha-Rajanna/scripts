@@ -38,19 +38,6 @@ index 51f693e143..ae15cb2e78 100644
  build:clang-msan --copt -fsanitize-memory-track-origins=2
  build:clang-msan --copt -DMEMORY_SANITIZER=1
  build:clang-msan --test_env=MSAN_SYMBOLIZER_PATH
-diff --git a/bazel/foreign_cc/BUILD b/bazel/foreign_cc/BUILD
-index f97ff45b55..476c8b6ef5 100644
---- a/bazel/foreign_cc/BUILD
-+++ b/bazel/foreign_cc/BUILD
-@@ -127,7 +127,7 @@ configure_make(
-     lib_source = "@com_github_luajit_luajit//:all",
-     out_include_dir = "include/luajit-2.1",
-     out_static_libs = select({
--        "//bazel:windows_x86_64": ["lua51.lib"],
-+        "//bazel:windows_x86_64": ["lua51.lib"],            
-         "//conditions:default": ["libluajit-5.1.a"],
-     }),
-     targets = [],
 diff --git a/bazel/repositories.bzl b/bazel/repositories.bzl
 index 42a2137221..fc1d608cbb 100644
 --- a/bazel/repositories.bzl
