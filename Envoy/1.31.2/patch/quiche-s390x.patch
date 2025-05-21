@@ -410,24 +410,31 @@ index 5f79f640b..2eef69ee4 100644
  
  TEST(CryptoFramerTest, ProcessInputTagsOutOfOrder) {
 diff --git a/quiche/quic/core/crypto/crypto_protocol.h b/quiche/quic/core/crypto/crypto_protocol.h
-index 6d5750b71..4e268d3d8 100644
+index c1bf0dbc4..81f6001c9 100644
 --- a/quiche/quic/core/crypto/crypto_protocol.h
 +++ b/quiche/quic/core/crypto/crypto_protocol.h
-@@ -19,8 +19,14 @@
- //
- // We use a macro to ensure that no static initialisers are created. Use the
- // MakeQuicTag function in normal code.
+@@ -28,11 +28,21 @@ namespace internal {
+ 
+ // Construct a QuicTag from a 4 digit string. The input array is five bytes
+ // because of the trailing null byte.
++
 +#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
 +    __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-+#define TAG(a, b, c, d) \
-+  static_cast<QuicTag>((a << 24) + (b << 16) + (c << 8) + d)
++constexpr QuicTag MakeStaticQuicTag(const char (&input)[5]) {
++  constexpr auto u8 = [](char c) { return static_cast<uint8_t>(c); };
++  return static_cast<QuicTag>((u8(input[0]) << 24) | (u8(input[1]) << 16) |
++                              (u8(input[2]) << 8) | u8(input[3]));
++}
 +#else
- #define TAG(a, b, c, d) \
-   static_cast<QuicTag>((d << 24) + (c << 16) + (b << 8) + a)
+ constexpr QuicTag MakeStaticQuicTag(const char (&input)[5]) {
+   constexpr auto u8 = [](char c) { return static_cast<uint8_t>(c); };
+   return static_cast<QuicTag>((u8(input[3]) << 24) | (u8(input[2]) << 16) |
+                               (u8(input[1]) << 8) | u8(input[0]));
+ }
 +#endif
  
- namespace quic {
- 
+ // A variant for three-character QUIC tags. Pads the end with null bytes.
+ constexpr QuicTag MakeStaticQuicTag(const char (&input)[4]) {
 diff --git a/quiche/quic/core/crypto/crypto_server_test.cc b/quiche/quic/core/crypto/crypto_server_test.cc
 index e987190ba..6bacb3648 100644
 --- a/quiche/quic/core/crypto/crypto_server_test.cc
@@ -567,17 +574,17 @@ index e987190ba..6bacb3648 100644
                                       {"PUBS", pub_hex_},
                                       {"NONC", nonce_hex_},
                                       {"VER\0", client_version_string_}},
-diff --git a/quiche/quic/core/internet_checksum.cc b/quiche/quic/core/internet_checksum.cc
-index 64bf1c775..1ba6e1b78 100644
---- a/quiche/quic/core/internet_checksum.cc
-+++ b/quiche/quic/core/internet_checksum.cc
+diff --git a/quiche/common/internet_checksum.cc b/quiche/common/internet_checksum.cc
+index 668d54676..44d0bd70a 100644
+--- a/quiche/common/internet_checksum.cc
++++ b/quiche/common/internet_checksum.cc
 @@ -10,6 +10,8 @@
  #include "absl/strings/string_view.h"
  #include "absl/types/span.h"
  
 +#include "quiche/common/quiche_endian.h"
 +
- namespace quic {
+ namespace quiche {
  
  void InternetChecksum::Update(const char* data, size_t size) {
 @@ -20,7 +22,9 @@ void InternetChecksum::Update(const char* data, size_t size) {
@@ -585,9 +592,9 @@ index 64bf1c775..1ba6e1b78 100644
    }
    if (current < data + size) {
 -    accumulator_ += *reinterpret_cast<const unsigned char*>(current);
-+    uint16_t v = *reinterpret_cast<const unsigned char*>(current);
-+    v = quiche::QuicheEndian::HostToLittleEndian16(v);
-+    accumulator_ += v;
++     uint16_t v = *reinterpret_cast<const unsigned char*>(current);
++     v = quiche::QuicheEndian::HostToLittleEndian16(v);
++     accumulator_ += v;
    }
  }
  
@@ -678,18 +685,18 @@ index 40262d0d9..0b0e9520e 100644
      EXPECT_EQ(i - 1, encoded1);
      // Check roundtrip.
 diff --git a/quiche/quic/core/quic_framer.cc b/quiche/quic/core/quic_framer.cc
-index 4e037f564..e842f3f71 100644
+index a50662408..13f01d29b 100644
 --- a/quiche/quic/core/quic_framer.cc
 +++ b/quiche/quic/core/quic_framer.cc
-@@ -57,6 +57,7 @@
+@@ -56,6 +56,7 @@
+ #include "quiche/quic/platform/api/quic_flags.h"
  #include "quiche/quic/platform/api/quic_ip_address_family.h"
  #include "quiche/quic/platform/api/quic_logging.h"
- #include "quiche/quic/platform/api/quic_stack_trace.h"
 +#include "quiche/common/quiche_endian.h"
  #include "quiche/common/quiche_text_utils.h"
  #include "quiche/common/wire_serialization.h"
  
-@@ -1238,7 +1239,7 @@ std::unique_ptr<QuicEncryptedPacket> QuicFramer::BuildPublicResetPacket(
+@@ -1250,7 +1251,7 @@ std::unique_ptr<QuicEncryptedPacket> QuicFramer::BuildPublicResetPacket(
      const QuicPublicResetPacket& packet) {
    CryptoHandshakeMessage reset;
    reset.set_tag(kPRST);
@@ -698,7 +705,7 @@ index 4e037f564..e842f3f71 100644
    if (packet.client_address.host().address_family() !=
        IpAddressFamily::IP_UNSPEC) {
      // packet.client_address is non-empty.
-@@ -5327,7 +5328,8 @@ bool QuicFramer::AppendAckFrameAndTypeByte(const QuicAckFrame& frame,
+@@ -5376,7 +5377,8 @@ bool QuicFramer::AppendAckFrameAndTypeByte(const QuicAckFrame& frame,
    }
  
    if (num_ack_blocks > 0) {
@@ -763,13 +770,13 @@ index 9bf85b2ea..c98021df2 100644
    QuicIpAddress ip_address;
    ip_address.FromPackedString(reinterpret_cast<const char*>(&ip[0]), ip_length);
 diff --git a/quiche/quic/core/quic_tag.cc b/quiche/quic/core/quic_tag.cc
-index 73d13d8a3..77ea04e0f 100644
+index 27a71e495..54c37e150 100644
 --- a/quiche/quic/core/quic_tag.cc
 +++ b/quiche/quic/core/quic_tag.cc
-@@ -14,10 +14,16 @@
+@@ -15,10 +15,16 @@
+ #include "absl/strings/escaping.h"
  #include "absl/strings/str_split.h"
- #include "quiche/quic/platform/api/quic_flag_utils.h"
- #include "quiche/quic/platform/api/quic_flags.h"
+ #include "absl/strings/string_view.h"
 +#include "quiche/common/quiche_endian.h"
  #include "quiche/common/quiche_text_utils.h"
  
@@ -783,7 +790,7 @@ index 73d13d8a3..77ea04e0f 100644
  bool FindMutualQuicTag(const QuicTagVector& our_tags,
                         const QuicTagVector& their_tags, QuicTag* out_result,
                         size_t* out_index) {
-@@ -46,17 +52,31 @@ std::string QuicTagToString(QuicTag tag) {
+@@ -47,17 +53,31 @@ std::string QuicTagToString(QuicTag tag) {
    bool ascii = true;
    const QuicTag orig_tag = tag;
  
@@ -807,8 +814,8 @@ index 73d13d8a3..77ea04e0f 100644
 -    if (!absl::ascii_isprint(static_cast<unsigned char>(chars[i]))) {
 -      ascii = false;
 -      break;
-+  } else {
-+    for (size_t i = 0; i < ABSL_ARRAYSIZE(chars); i++) {
++    } else {
++      for (size_t i = 0; i < ABSL_ARRAYSIZE(chars); i++) {
 +      chars[i] = static_cast<char>(tag);
 +      if ((chars[i] == 0 || chars[i] == '\xff') &&
 +          i == ABSL_ARRAYSIZE(chars) - 1) {
@@ -824,23 +831,23 @@ index 73d13d8a3..77ea04e0f 100644
    }
  
    if (ascii) {
-@@ -68,8 +88,13 @@ std::string QuicTagToString(QuicTag tag) {
+@@ -69,8 +89,13 @@ std::string QuicTagToString(QuicTag tag) {
  }
  
  uint32_t MakeQuicTag(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
 -  return static_cast<uint32_t>(a) | static_cast<uint32_t>(b) << 8 |
 -         static_cast<uint32_t>(c) << 16 | static_cast<uint32_t>(d) << 24;
 +  if (quiche::QuicheEndian::HostEndianness == quiche::BIG) {
-+    return static_cast<uint32_t>(d) | static_cast<uint32_t>(c) << 8 |
-+           static_cast<uint32_t>(b) << 16 | static_cast<uint32_t>(a) << 24;
-+  } else {
-+    return static_cast<uint32_t>(a) | static_cast<uint32_t>(b) << 8 |
-+           static_cast<uint32_t>(c) << 16 | static_cast<uint32_t>(d) << 24;
-+  }
++   return static_cast<uint32_t>(d) | static_cast<uint32_t>(c) << 8 |
++          static_cast<uint32_t>(b) << 16 | static_cast<uint32_t>(a) << 24;
++ } else {
++   return static_cast<uint32_t>(a) | static_cast<uint32_t>(b) << 8 |
++          static_cast<uint32_t>(c) << 16 | static_cast<uint32_t>(d) << 24;
++ }
  }
  
  bool ContainsQuicTag(const QuicTagVector& tag_vector, QuicTag tag) {
-@@ -85,12 +110,18 @@ QuicTag ParseQuicTag(absl::string_view tag_string) {
+@@ -86,12 +111,18 @@ QuicTag ParseQuicTag(absl::string_view tag_string) {
      tag_string = tag_bytes;
    }
    QuicTag tag = 0;
@@ -852,7 +859,7 @@ index 73d13d8a3..77ea04e0f 100644
 -    tag |= token_char;
 +  if (quiche::QuicheEndian::HostEndianness == quiche::BIG) {
 +    size_t len = tag_string.length() < sizeof tag
-+                     ? tag_string.length() : sizeof tag;
++                    ? tag_string.length() : sizeof tag;
 +    memcpy(&tag, tag_string.data(), len);
 +  } else {
 +    // Iterate over every character from right to left.
