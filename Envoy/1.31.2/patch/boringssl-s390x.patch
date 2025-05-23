@@ -55,22 +55,6 @@ index d126acf7e..2b9748b6a 100644
    return CBB_flush(cbb);
  
  err:
-diff --git a/crypto/bytestring/cbs.c b/crypto/bytestring/cbs.c
-index bf94db118..6669ecaf5 100644
---- a/crypto/bytestring/cbs.c
-+++ b/crypto/bytestring/cbs.c
-@@ -509,7 +509,11 @@ int CBS_get_asn1_int64(CBS *cbs, int64_t *out) {
-   uint8_t sign_extend[sizeof(int64_t)];
-   memset(sign_extend, is_negative ? 0xff : 0, sizeof(sign_extend));
-   for (size_t i = 0; i < len; i++) {
-+#if __BYTE_ORDER == __BIG_ENDIAN
-+    sign_extend[sizeof(int64_t) - i - 1] = data[len - i - 1];
-+#else
-     sign_extend[i] = data[len - i - 1];
-+#endif
-   }
-   memcpy(out, sign_extend, sizeof(sign_extend));
-   return 1;
 diff --git a/crypto/chacha/chacha.c b/crypto/chacha/chacha.c
 index 57ceab637..27fd2e4e9 100644
 --- a/crypto/chacha/chacha.c
@@ -227,10 +211,10 @@ index 283026726..0626ad2a4 100644
    }
  
    if (!PKCS5_PBKDF2_HMAC(password, password_len, (const uint8_t *)B, B_bytes, 1,
-diff --git a/crypto/fipsmodule/aes/aes_nohw.c b/crypto/fipsmodule/aes/aes_nohw.c
+diff --git a/crypto/fipsmodule/aes/aes_nohw.c.inc b/crypto/fipsmodule/aes/aes_nohw.c.inc
 index c5dec0e5c..58771cc53 100644
---- a/crypto/fipsmodule/aes/aes_nohw.c
-+++ b/crypto/fipsmodule/aes/aes_nohw.c
+--- a/crypto/fipsmodule/aes/aes_nohw.c.inc
++++ b/crypto/fipsmodule/aes/aes_nohw.c.inc
 @@ -345,10 +345,11 @@ static inline uint32_t aes_nohw_word_from_bytes(uint8_t a0, uint8_t a1,
  
  static inline void aes_nohw_compact_block(aes_word_t out[AES_NOHW_BLOCK_WORDS],
@@ -255,10 +239,10 @@ index c5dec0e5c..58771cc53 100644
  #else
    uint32_t a0 = in[0];
    uint32_t a1 = in[1];
-diff --git a/crypto/fipsmodule/bn/bytes.c b/crypto/fipsmodule/bn/bytes.c
-index dcb0afc19..e7c43f45d 100644
---- a/crypto/fipsmodule/bn/bytes.c
-+++ b/crypto/fipsmodule/bn/bytes.c
+diff --git a/crypto/fipsmodule/bn/bytes.c.inc b/crypto/fipsmodule/bn/bytes.c.inc
+index dcb0afc19..932bb29dc 100644
+--- a/crypto/fipsmodule/bn/bytes.c.inc
++++ b/crypto/fipsmodule/bn/bytes.c.inc
 @@ -70,7 +70,11 @@ void bn_big_endian_to_words(BN_ULONG *out, size_t out_len, const uint8_t *in,
    // Load whole words.
    while (in_len >= sizeof(BN_ULONG)) {
@@ -305,13 +289,14 @@ index dcb0afc19..e7c43f45d 100644
  BIGNUM *BN_bin2bn(const uint8_t *in, size_t len, BIGNUM *ret) {
    BIGNUM *bn = NULL;
    if (ret == NULL) {
-@@ -145,12 +176,16 @@ BIGNUM *BN_lebin2bn(const uint8_t *in, size_t len, BIGNUM *ret) {
+@@ -144,13 +175,17 @@ BIGNUM *BN_lebin2bn(const uint8_t *in, size_t len, BIGNUM *ret) {
+     return NULL;
    }
    ret->width = (int)num_words;
- 
 +#if __BYTE_ORDER == __BIG_ENDIAN
 +  bn_little_endian_to_big_endian_words(ret->d, ret->width, in, len);
 +#else
+ 
    // Make sure the top bytes will be zeroed.
    ret->d[num_words - 1] = 0;
  
@@ -374,7 +359,6 @@ index dcb0afc19..e7c43f45d 100644
    if (out_len < num_bytes) {
      num_bytes = out_len;
    }
- 
 +#if __BYTE_ORDER == __BIG_ENDIAN
 +  size_t bytes_left = num_bytes;
 +  for (size_t i = 0; i < in_len; i++) {
@@ -395,6 +379,7 @@ index dcb0afc19..e7c43f45d 100644
 +#else
 +  // For little-endian platforms, the internal representation is
 +  // also little-endian as bytes. We can simply copy it in reverse.
+ 
    for (size_t i = 0; i < num_bytes; i++) {
      out[out_len - i - 1] = bytes[i];
    }
@@ -414,7 +399,7 @@ index dcb0afc19..e7c43f45d 100644
 +    CRYPTO_store_word_be(out + (i * sizeof(BN_ULONG)), in->d[i]);
 +  }
 +#else
-+  // For little-endian platforms, we can simply memcpy into the
++  // For little-endian platforms, we can simply memcpy into the  
    // internal representation.
    const uint8_t *bytes = (const uint8_t *)in->d;
 -  size_t num_bytes = in->width * BN_BYTES;
@@ -428,10 +413,10 @@ index dcb0afc19..e7c43f45d 100644
    OPENSSL_memset(out + num_bytes, 0, len - num_bytes);
    return 1;
 diff --git a/crypto/internal.h b/crypto/internal.h
-index a77102d76..f0abf6cdc 100644
+index ca3702795..ed3985bfd 100644
 --- a/crypto/internal.h
 +++ b/crypto/internal.h
-@@ -1071,42 +1071,68 @@ static inline void *OPENSSL_memset(void *dst, int c, size_t n) {
+@@ -1107,42 +1107,68 @@ static inline void CRYPTO_store_u16_be(void *out, uint16_t v) {
  static inline uint32_t CRYPTO_load_u32_le(const void *in) {
    uint32_t v;
    OPENSSL_memcpy(&v, in, sizeof(v));
@@ -500,7 +485,7 @@ index a77102d76..f0abf6cdc 100644
    OPENSSL_memcpy(out, &v, sizeof(v));
  }
  
-@@ -1132,6 +1158,17 @@ static inline crypto_word_t CRYPTO_load_word_be(const void *in) {
+@@ -1168,6 +1194,17 @@ static inline crypto_word_t CRYPTO_load_word_be(const void *in) {
  #endif
  }
  
@@ -711,29 +696,29 @@ index 2760f52ce..c61490d11 100644
  // The list above enumerates the platforms that BoringSSL supports. For these
  // platforms we keep a reasonable bar of not breaking them: automated test
 diff --git a/ssl/test/runner/runner.go b/ssl/test/runner/runner.go
-index e18bfd3fd..74179c38c 100644
+index 481a65c97..f6e6516d0 100644
 --- a/ssl/test/runner/runner.go
 +++ b/ssl/test/runner/runner.go
 @@ -49,6 +49,7 @@ import (
- 	"boringssl.googlesource.com/boringssl/ssl/test/runner/hpke"
- 	"boringssl.googlesource.com/boringssl/util/testresult"
- 	"golang.org/x/crypto/cryptobyte"
-+	"golang.org/x/sys/cpu"
+        "boringssl.googlesource.com/boringssl/ssl/test/runner/hpke"
+        "boringssl.googlesource.com/boringssl/util/testresult"
+        "golang.org/x/crypto/cryptobyte"
++       "golang.org/x/sys/cpu"
  )
  
  var (
-@@ -989,7 +990,13 @@ func doExchange(test *testCase, config *Config, conn net.Conn, isResume bool, tr
- 		if _, err := io.ReadFull(tlsConn, secretLenBytes); err != nil {
- 			return err
- 		}
--		secretLen := binary.LittleEndian.Uint16(secretLenBytes)
+@@ -999,7 +1000,13 @@ func doExchange(test *testCase, config *Config, conn net.Conn, isResume bool, tr
+                if _, err := io.ReadFull(tlsConn, secretLenBytes); err != nil {
+                        return err
+                }
+-               secretLen := binary.LittleEndian.Uint16(secretLenBytes)
 +
-+		var secretLen uint16
-+		if cpu.IsBigEndian {
-+			secretLen = binary.BigEndian.Uint16(secretLenBytes)
-+		} else {
-+			secretLen = binary.LittleEndian.Uint16(secretLenBytes)
-+		}
++               var secretLen uint16
++               if cpu.IsBigEndian {
++                       secretLen = binary.BigEndian.Uint16(secretLenBytes)
++               } else {
++                       secretLen = binary.LittleEndian.Uint16(secretLenBytes)
++               }
  
- 		theirReadSecret := make([]byte, secretLen)
- 		theirWriteSecret := make([]byte, secretLen)
+                theirReadSecret := make([]byte, secretLen)
+                theirWriteSecret := make([]byte, secretLen)
