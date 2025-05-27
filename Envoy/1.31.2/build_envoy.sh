@@ -362,13 +362,13 @@ msglog "Installing the dependencies for Envoy from repository"
 case "$DISTRO" in
 #----------------------------------------------------------
 
-"rhel-8.10" | "rhel-9.4")
+"rhel-8.10" | "rhel-9.4" | "rhel-9.5")
   printf -- "\nInstalling %s %s for %s \n" "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DISTRO" |& tee -a "${LOG_FILE}"
   ALLOWERASING=""
   if [[ "$DISTRO" == rhel-9* ]]; then
     ALLOWERASING="--allowerasing"
   fi
-  sudo yum install -y ${ALLOWERASING} wget curl zip unzip patch clang-14.0.6 llvm-devel-14.0.6 gcc-toolset-12-gcc gcc-toolset-12-gcc-c++ gcc-toolset-12-libstdc++-devel gcc-toolset-12-binutils-devel gcc-toolset-12-binutils-gold gcc-toolset-12-annobin-plugin-gcc gcc-toolset-12-libatomic-devel pkgconf-pkg-config openssl-devel java-11-openjdk-devel python3.11 |& tee -a "${LOG_FILE}"
+  sudo yum install -y ${ALLOWERASING} wget curl zip unzip patch clang-14.0.6 llvm-devel-14.0.6 gcc-toolset-12-gcc gcc-toolset-12-gcc-c++ gcc-toolset-12-libstdc++-devel gcc-toolset-12-binutils-devel gcc-toolset-12-binutils-gold gcc-toolset-12-annobin-plugin-gcc gcc-toolset-12-libatomic-devel pkgconf-pkg-config openssl-devel java-21-openjdk-devel python3.11 |& tee -a "${LOG_FILE}"
   LLVM_HOME_DIR="/usr"
 
   #set gcc 12 as default
