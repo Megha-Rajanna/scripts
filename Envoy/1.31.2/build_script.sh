@@ -127,8 +127,7 @@ export CARGO_BAZEL_REPIN=true
 cd $wdir/${PACKAGE_NAME}
 bazel/setup_clang.sh "$LLVM_HOME_DIR"
 ret=0
-#bazel build -c opt --config=libc++ envoy --config=clang --define=wasm=disabled --cxxopt=-fpermissive || ret=$?
-bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}" --linkopt="-latomic"
+bazel build -c opt --config=libc++ envoy --config=clang --define=wasm=disabled --cxxopt=-fpermissive || ret=$?
 if [ "$ret" -ne 0 ]
 then
 	echo "FAIL: Build failed."
