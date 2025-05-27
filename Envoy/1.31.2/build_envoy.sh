@@ -9,16 +9,16 @@
 set -e -o pipefail
 
 PACKAGE_NAME="Envoy"
-PACKAGE_VERSION="v1.31.2"
+PACKAGE_VERSION="v1.34.0"
 SOURCE_ROOT="$(pwd)"
 
-PATCH_URL="https://raw.githubusercontent.com/linux-on-ibm-z/scripts/master/Envoy/1.31.2/patch"
+PATCH_URL="https://raw.githubusercontent.com/Megha-Rajanna/scripts/refs/heads/master/Envoy/1.31.2/patch"
 
 FORCE="false"
 LOG_FILE="$SOURCE_ROOT/logs/${PACKAGE_NAME}-${PACKAGE_VERSION}-$(date +"%F-%T").log"
 ENV_VARS=$SOURCE_ROOT/setenv.sh
 
-BAZEL_VERSION="6.5.0"
+BAZEL_VERSION="7.6.0"
 GO_VERSION="1.23.1"
 LLVM_HOME_DIR=""
 GCC_TOOLCHAIN_VERSION_OVERRIDE=""
@@ -90,8 +90,8 @@ cleanup() {
 configureAndInstall() {
   msg "Configuration and Installation started"
 
-  buildAndInstallBazel
-  installGo
+ # buildAndInstallBazel
+ # installGo
   installRust
 
   EXTRA_BAZEL_ARGS_ENVOY=()
@@ -116,17 +116,15 @@ configureAndInstall() {
   fi
 
   # Apply patches to allow envoy to build
-  curl -sSL https://github.com/envoyproxy/envoy/commit/55b0fc45cfdc2c0df002690606853540cf794fab.patch | git apply -
-  curl -sSL $PATCH_URL/envoy-build.patch | git apply -
+ # curl -sSL https://github.com/envoyproxy/envoy/commit/55b0fc45cfdc2c0df002690606853540cf794fab.patch | git apply -
+  curl -sSL $PATCH_URL/envoy-build.patch | git apply --allow-empty -
   
   # Apply patches for failing tests
-  curl -sSL $PATCH_URL/envoy-test.patch | git apply -
-  curl -sSL https://github.com/envoyproxy/envoy/commit/f6a84d8c66c1346063c32d046b56e52b28b4da9a.patch | git apply -
+  # curl -sSL $PATCH_URL/envoy-test.patch | git apply -
+  # curl -sSL https://github.com/envoyproxy/envoy/commit/f6a84d8c66c1346063c32d046b56e52b28b4da9a.patch | git apply -
 
   # Move patch files to envoy/bazel which will be applied to external packages while building envoy
   curl -sSL $PATCH_URL/boringssl-s390x.patch > $SOURCE_ROOT/envoy/bazel/boringssl-s390x.patch
-  curl -sSL $PATCH_URL/cel-cpp-memory.patch > $SOURCE_ROOT/envoy/bazel/cel-cpp-memory.patch
-  curl -sSL $PATCH_URL/cel-cpp-json.patch > $SOURCE_ROOT/envoy/bazel/cel-cpp-json.patch
   curl -sSL $PATCH_URL/grpc-s390x.patch > $SOURCE_ROOT/envoy/bazel/grpc-s390x.patch
   curl -sSL $PATCH_URL/rules_foreign_cc-s390x.patch > $SOURCE_ROOT/envoy/bazel/rules_foreign_cc-s390x.patch
   curl -sSL https://github.com/iii-i/moonjit/commit/db9c993d2ffcf09b3995b8949bb8f5026e610857.patch > $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-s390x.patch
@@ -136,7 +134,7 @@ configureAndInstall() {
 
   msg "Building Envoy"
   
-  bazel build envoy -c opt --config=clang --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}"
+  bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}"
 
   runTest
 }
@@ -205,7 +203,7 @@ buildAndInstallBazel() {
   wget -q https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
   unzip -q bazel-${BAZEL_VERSION}-dist.zip
   chmod -R +w .
-  curl -sSL $PATCH_URL/dist-md5.patch | patch -p1
+  #curl -sSL $PATCH_URL/dist-md5.patch | patch -p1
   env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
   sudo cp output/bazel /usr/local/bin/
 }
@@ -225,6 +223,7 @@ installRust() {
   msg "Installing Rust"
   cd "$SOURCE_ROOT"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y
+  cargo install cross --version 0.2.1
   export PATH=$HOME/.cargo/bin:$PATH
   rustc --version
   cargo --version
