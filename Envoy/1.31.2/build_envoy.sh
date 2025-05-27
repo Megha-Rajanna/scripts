@@ -120,8 +120,8 @@ configureAndInstall() {
   curl -sSL $PATCH_URL/envoy-build.patch | git apply --allow-empty -
   
   # Apply patches for failing tests
-  # curl -sSL $PATCH_URL/envoy-test.patch | git apply -
-  # curl -sSL https://github.com/envoyproxy/envoy/commit/f6a84d8c66c1346063c32d046b56e52b28b4da9a.patch | git apply -
+  curl -sSL $PATCH_URL/envoy-test.patch | git apply -
+  curl -sSL https://github.com/envoyproxy/envoy/commit/f6a84d8c66c1346063c32d046b56e52b28b4da9a.patch | git apply -
 
   # Move patch files to envoy/bazel which will be applied to external packages while building envoy
   curl -sSL $PATCH_URL/boringssl-s390x.patch > $SOURCE_ROOT/envoy/bazel/boringssl-s390x.patch
