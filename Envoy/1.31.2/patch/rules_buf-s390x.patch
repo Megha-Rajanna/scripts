@@ -1,9 +1,9 @@
 diff --git a/buf/internal/toolchain.bzl b/buf/internal/toolchain.bzl
-index 26c1ed9..fe780ca 100644
+index 1cc60ff..8720b08 100644
 --- a/buf/internal/toolchain.bzl
 +++ b/buf/internal/toolchain.bzl
-@@ -112,10 +112,12 @@ def _buf_download_releases_impl(ctx):
-         version = json.decode(version_data)["name"]
+@@ -115,7 +115,7 @@ def _buf_download_releases_impl(ctx):
+         version = versions[0]["name"]
  
      os, cpu = _detect_host_platform(ctx)
 -    if os not in ["linux", "darwin", "windows"] or cpu not in ["arm64", "amd64"]:
@@ -11,8 +11,3 @@ index 26c1ed9..fe780ca 100644
          fail("Unsupported operating system or cpu architecture ")
      if os == "linux" and cpu == "arm64":
          cpu = "aarch64"
-+    if os == "linux" and cpu == "s390x":
-+        cpu = "s390x"
-     if cpu == "amd64":
-         cpu = "x86_64"
- 
