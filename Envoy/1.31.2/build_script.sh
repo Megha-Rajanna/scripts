@@ -37,11 +37,13 @@ dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarc
 yum install -y \
     cmake \
     libatomic \
-    libstdc++ \
+    libstdc++-devel \
     libstdc++-static \
     libtool \
     lld \
     patch \
+    clang14 \
+    llvm14-devel \
     python3-pip \
     openssl-devel \
     libffi-devel \
@@ -83,15 +85,15 @@ curl -sSL $PATCH_URL/envoy-build.patch | git apply --allow-empty -
 #curl -sSL https://github.com/envoyproxy/envoy/commit/f6a84d8c66c1346063c32d046b56e52b28b4da9a.patch | git apply -
 
 # Move patch files to envoy/bazel which will be applied to external packages while building envoy
-curl -sSL $PATCH_URL/boringssl-s390x.patch > $SOURCE_ROOT/envoy/bazel/boringssl-s390x.patch
-curl -sSL $PATCH_URL/proxy_wasm_cpp_host-s390x.patch > $SOURCE_ROOT/envoy/bazel/proxy_wasm_cpp_host-s390x.patch
-curl -sSL $PATCH_URL/grpc-s390x.patch > $SOURCE_ROOT/envoy/bazel/grpc-s390x.patch
-curl -sSL $PATCH_URL/rules_buf-s390x.patch > $SOURCE_ROOT/envoy/api/bazel/rules_buf-s390x.patch
-curl -sSL $PATCH_URL/rules_foreign_cc-s390x.patch > $SOURCE_ROOT/envoy/bazel/rules_foreign_cc-s390x.patch
-curl -sSL https://github.com/iii-i/moonjit/commit/db9c993d2ffcf09b3995b8949bb8f5026e610857.patch > $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-s390x.patch
-curl -sSL https://github.com/iii-i/moonjit/commit/e0728b5f0616088db6f7856b5eaba91625e23577.patch >> $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-s390x.patch
-curl -sSL $PATCH_URL/luajit-as.patch > $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-as.patch
-curl -sSL $PATCH_URL/quiche-s390x.patch > $SOURCE_ROOT/envoy/bazel/quiche-s390x.patch
+curl -sSL $PATCH_URL/boringssl-s390x.patch > $wdir/envoy/bazel/boringssl-s390x.patch
+curl -sSL $PATCH_URL/proxy_wasm_cpp_host-s390x.patch > $wdir/envoy/bazel/proxy_wasm_cpp_host-s390x.patch
+curl -sSL $PATCH_URL/grpc-s390x.patch > $wdir/envoy/bazel/grpc-s390x.patch
+curl -sSL $PATCH_URL/rules_buf-s390x.patch > $wdir/envoy/api/bazel/rules_buf-s390x.patch
+curl -sSL $PATCH_URL/rules_foreign_cc-s390x.patch > $wdir/envoy/bazel/rules_foreign_cc-s390x.patch
+curl -sSL https://github.com/iii-i/moonjit/commit/db9c993d2ffcf09b3995b8949bb8f5026e610857.patch > $wdir/envoy/bazel/foreign_cc/luajit-s390x.patch
+curl -sSL https://github.com/iii-i/moonjit/commit/e0728b5f0616088db6f7856b5eaba91625e23577.patch >> $wdir/envoy/bazel/foreign_cc/luajit-s390x.patch
+curl -sSL $PATCH_URL/luajit-as.patch > $wdir/envoy/bazel/foreign_cc/luajit-as.patch
+curl -sSL $PATCH_URL/quiche-s390x.patch > $wdir/envoy/bazel/quiche-s390x.patch
 BAZEL_VERSION=$(cat .bazelversion)
 
 # Build and setup bazel
