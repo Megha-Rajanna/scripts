@@ -136,7 +136,7 @@ configureAndInstall() {
 
   msg "Building Envoy"
   
-  bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}"
+  bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}" --linkopt="-latomic"
 
   runTest
 }
