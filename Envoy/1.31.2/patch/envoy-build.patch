@@ -115,3 +115,16 @@ index 42a2137..6b42220 100644
          patch_args = ["-p1"],
      )
  
+diff --git a/bazel/repositories_extra.bzl b/bazel/repositories_extra.bzl
+index 7a9d3bb..22daabc 100644
+--- a/bazel/repositories_extra.bzl
++++ b/bazel/repositories_extra.bzl
+@@ -16,7 +16,7 @@ PYTHON_MINOR_VERSION = _python_minor_version(PYTHON_VERSION)
+ # Envoy deps that rely on a first stage of dependency loading in envoy_dependencies().
+ def envoy_dependencies_extra(
+         python_version = PYTHON_VERSION,
+-        ignore_root_user_error = False):
++        ignore_root_user_error = True):        
+     bazel_features_deps()
+     emsdk_deps()
+     raze_fetch_remote_crates()
