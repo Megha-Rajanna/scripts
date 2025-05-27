@@ -126,6 +126,7 @@ configureAndInstall() {
   # Move patch files to envoy/bazel which will be applied to external packages while building envoy
   curl -sSL $PATCH_URL/boringssl-s390x.patch > $SOURCE_ROOT/envoy/bazel/boringssl-s390x.patch
   curl -sSL $PATCH_URL/grpc-s390x.patch > $SOURCE_ROOT/envoy/bazel/grpc-s390x.patch
+  curl -sSL $PATCH_URL/rules_buf-s390x.patch > $SOURCE_ROOT/envoy/api/bazel/rules_buf-s390x.patch
   curl -sSL $PATCH_URL/rules_foreign_cc-s390x.patch > $SOURCE_ROOT/envoy/bazel/rules_foreign_cc-s390x.patch
   curl -sSL https://github.com/iii-i/moonjit/commit/db9c993d2ffcf09b3995b8949bb8f5026e610857.patch > $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-s390x.patch
   curl -sSL https://github.com/iii-i/moonjit/commit/e0728b5f0616088db6f7856b5eaba91625e23577.patch >> $SOURCE_ROOT/envoy/bazel/foreign_cc/luajit-s390x.patch
