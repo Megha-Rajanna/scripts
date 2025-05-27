@@ -204,7 +204,6 @@ buildAndInstallBazel() {
   wget -q https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
   unzip -q bazel-${BAZEL_VERSION}-dist.zip
   chmod -R +w .
-  #curl -sSL $PATCH_URL/dist-md5.patch | patch -p1
   env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
   sudo cp output/bazel /usr/local/bin/
 }
@@ -225,6 +224,9 @@ installRust() {
   cd "$SOURCE_ROOT"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y
   cargo install cross --version 0.2.1
+  cross build --release --locked --bin cargo-bazel --target=s390x-unknown-linux-gnu
+  export CARGO_BAZEL_GENERATOR_URL=file://$SOURCE_ROOT/target/s390x-unknown-linux-gnu/release/cargo-bazel
+  echo "cargo-bazel build successful!"
   export PATH=$HOME/.cargo/bin:$PATH
   rustc --version
   cargo --version
