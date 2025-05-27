@@ -69,6 +69,7 @@ scriptdir=$(dirname $(realpath $0))
 wdir=$(pwd)
 export ENVOY_BIN=$wdir/envoy/envoy-static
 export ENVOY_ZIP=$wdir/envoy/envoy-static_${PACKAGE_VERSION}_UBI9.3.zip
+LLVM_HOME_DIR="/usr"
 
 #Download Envoy source code
 cd $wdir
@@ -105,14 +106,6 @@ if [ -z "$(ls -A $wdir/bazel)" ]; then
 fi
 export PATH=$PATH:$wdir/bazel/output
 
-#Setup clang
-cd $wdir
-if [ -z "$(ls -A $wdir/clang+llvm-14.0.6-powerpc64le-linux-rhel-8.4)" ]; then
-	wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.6/clang+llvm-14.0.6-powerpc64le-linux-rhel-8.4.tar.xz
-	tar -xvf clang+llvm-14.0.6-powerpc64le-linux-rhel-8.4.tar.xz
-	rm -rf clang+llvm-14.0.6-powerpc64le-linux-rhel-8.4.tar.xz
-fi
-
 #Install rust and cross
 curl https://sh.rustup.rs -sSf | sh -s -- -y && source ~/.cargo/env
 cargo install cross --version 0.2.1
@@ -132,7 +125,7 @@ export CARGO_BAZEL_REPIN=true
 
 #Build Envoy
 cd $wdir/${PACKAGE_NAME}
-bazel/setup_clang.sh $wdir/clang+llvm-14.0.6-powerpc64le-linux-rhel-8.4/
+bazel/setup_clang.sh "$LLVM_HOME_DIR"
 ret=0
 #bazel build -c opt --config=libc++ envoy --config=clang --define=wasm=disabled --cxxopt=-fpermissive || ret=$?
 bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}" --linkopt="-latomic"
