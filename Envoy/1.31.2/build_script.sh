@@ -27,9 +27,9 @@ SCRIPT_PACKAGE_VERSION_WO_LEADING_V="${SCRIPT_PACKAGE_VERSION:1}"
 PATCH_URL="https://raw.githubusercontent.com/Megha-Rajanna/scripts/refs/heads/master/Envoy/1.31.2/patch"
 
 #Install centos and epel repos
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/CRB/ppc64le/os
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/AppStream//ppc64le/os
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/BaseOS/ppc64le/os
+yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/CRB/s390x/os
+yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/AppStream//s390x/os
+yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/BaseOS/s390x/os
 rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-Official
 dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 
