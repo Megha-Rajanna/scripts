@@ -52,15 +52,18 @@ index 8669544..6f2b9f6 100644
      external_http_archive(
          name = "rules_proto",
 diff --git a/bazel/repositories.bzl b/bazel/repositories.bzl
-index 42a2137..6b42220 100644
+index 42a2137221..2f7608d139 100644
 --- a/bazel/repositories.bzl
 +++ b/bazel/repositories.bzl
-@@ -262,7 +262,7 @@ def _boringssl_fips():
+@@ -262,7 +262,10 @@ def _boringssl_fips():
          name = "boringssl_fips",
          location_name = "boringssl",
          build_file = "@envoy//bazel/external:boringssl_fips.BUILD",
 -        patches = ["@envoy//bazel:boringssl_fips.patch"],
-+        patches = ["@envoy//bazel:boringssl_fips.patch", "@envoy//bazel:boringssl-s390x.patch"],
++        patches = [
++           "@envoy//bazel:boringssl_fips.patch",
++           "@envoy//bazel:boringssl-s390x.patch"
++       ],
          patch_args = ["-p1"],
      )
  
