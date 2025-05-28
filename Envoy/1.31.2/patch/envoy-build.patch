@@ -63,7 +63,7 @@ index 42a2137221..2f7608d139 100644
 +        patches = [
 +           "@envoy//bazel:boringssl_fips.patch",
 +           "@envoy//bazel:boringssl-s390x.patch",
-+       ],
++        ],
          patch_args = ["-p1"],
      )
  
