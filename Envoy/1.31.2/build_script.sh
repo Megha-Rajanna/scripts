@@ -1,3 +1,4 @@
+
 #!/bin/bash -ex
 # ----------------------------------------------------------------------------
 #
@@ -26,24 +27,27 @@ PACKAGE_URL=https://github.com/${PACKAGE_ORG}/${PACKAGE_NAME}
 SCRIPT_PACKAGE_VERSION_WO_LEADING_V="${SCRIPT_PACKAGE_VERSION:1}"
 PATCH_URL="https://raw.githubusercontent.com/Megha-Rajanna/scripts/refs/heads/master/Envoy/1.31.2/patch"
 
-#Install centos and epel repos
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/CRB/s390x/os
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/AppStream//s390x/os
-yum config-manager --add-repo https://mirror.stream.centos.org/9-stream/BaseOS/s390x/os
-rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-Official
-dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-
 #Install dependencies
-yum install -y \
+sudo yum install -y --allowerasing \
     cmake \
     libatomic \
-    libstdc++-devel \
+    libstdc++ \
     libstdc++-static \
     libtool \
     lld \
     patch \
-    clang14 \
-    llvm14-devel \
+    clang-14.0.6 \
+    llvm-devel-14.0.6 \
+    python3.11 \
+    gcc-toolset-12-gcc \
+    gcc-toolset-12-gcc-c++ \
+    gcc-toolset-12-libstdc++-devel \
+    gcc-toolset-12-binutils-devel \
+    gcc-toolset-12-binutils-gold \
+    gcc-toolset-12-annobin-plugin-gcc \
+    gcc-toolset-12-libatomic-devel \
+    pkgconf-pkg-config \
+    openssl-devel \
     python3-pip \
     openssl-devel \
     libffi-devel \
@@ -63,6 +67,9 @@ yum install -y \
     aspell-en \
     sudo
 
+# create symlink
+sudo ln -s /usr/lib64/libatomic.so.1.2.0 /usr/lib64/libatomic.so
+
 #Set environment variables
 export JAVA_HOME=$(compgen -G '/usr/lib/jvm/java-21-openjdk-*')
 export JRE_HOME=${JAVA_HOME}/jre
@@ -71,7 +78,7 @@ scriptdir=$(dirname $(realpath $0))
 wdir=$(pwd)
 export ENVOY_BIN=$wdir/envoy/envoy-static
 export ENVOY_ZIP=$wdir/envoy/envoy-static_${PACKAGE_VERSION}_UBI9.3.zip
-LLVM_HOME_DIR="/usr"
+LLVM_HOME_DIR="/usr/"
 
 #Download Envoy source code
 cd $wdir
@@ -99,41 +106,48 @@ BAZEL_VERSION=$(cat .bazelversion)
 # Build and setup bazel
 cd $wdir
 if [ -z "$(ls -A $wdir/bazel)" ]; then
-	mkdir bazel
-	cd bazel
-	wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
-	unzip bazel-${BAZEL_VERSION}-dist.zip
-	rm -rf bazel-${BAZEL_VERSION}-dist.zip
-	env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
+        mkdir bazel
+        cd bazel
+        wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+        unzip bazel-${BAZEL_VERSION}-dist.zip
+        rm -rf bazel-${BAZEL_VERSION}-dist.zip
+        env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
+        echo "Bazel installation successful!"
 fi
 export PATH=$PATH:$wdir/bazel/output
 
 #Install rust and cross
 curl https://sh.rustup.rs -sSf | sh -s -- -y && source ~/.cargo/env
 cargo install cross --version 0.2.1
+export PATH=$HOME/.cargo/bin:$PATH
+rustc --version
+cargo --version
+echo "Rust and cargo installation successful!"
 
 #Build cargo-bazel native binary
 cd $wdir
 if [ -z "$(ls -A $wdir/rules_rust)" ]; then
-	git clone https://github.com/bazelbuild/rules_rust
-	cd rules_rust
-	git checkout 0.56.0
-	cd crate_universe
-	cross build --release --locked --bin cargo-bazel --target=s390x-unknown-linux-gnu
-	echo "cargo-bazel build successful!"
+        git clone https://github.com/bazelbuild/rules_rust
+        cd rules_rust
+        git checkout 0.56.0
+        cd crate_universe
+        cross build --release --locked --bin cargo-bazel --target=s390x-unknown-linux-gnu
+        echo "cargo-bazel build successful!"
 fi
-export CARGO_BAZEL_GENERATOR_URL=file://$wdir/rules_rust/crate_universe/target/powerpc64le-unknown-linux-gnu/release/cargo-bazel
+export CARGO_BAZEL_GENERATOR_URL=file://$wdir/rules_rust/crate_universe/target/s390x-unknown-linux-gnu/release/cargo-bazel
 export CARGO_BAZEL_REPIN=true
 
 #Build Envoy
 cd $wdir/${PACKAGE_NAME}
 bazel/setup_clang.sh "$LLVM_HOME_DIR"
 ret=0
-bazel build -c opt --config=libc++ envoy --config=clang --define=wasm=disabled --cxxopt=-fpermissive || ret=$?
+export CC=/usr/bin/clang
+export EXTRA_BAZEL_ARGS_ENVOY=("--action_env=LD_LIBRARY_PATH=/usr/local/lib64" "--host_action_env=LD_LIBRARY_PATH=/usr/local/lib64")
+bazel build envoy -c opt --config=clang --features=-module_maps --test_env=HEAPCHECK= "${EXTRA_BAZEL_ARGS_ENVOY[@]}"  --linkopt="-latomic" || ret=$?
 if [ "$ret" -ne 0 ]
 then
-	echo "FAIL: Build failed."
-	exit 1
+        echo "FAIL: Build failed."
+        exit 1
 fi
 
 #Prepare binary for distribution
@@ -146,8 +160,8 @@ zip $ENVOY_ZIP envoy-static
 $ENVOY_BIN --version || ret=$?
 if [ "$ret" -ne 0 ]
 then
-	echo "FAIL: Smoke test failed."
-	exit 2
+        echo "FAIL: Smoke test failed."
+        exit 2
 fi
 
 #Run tests (take several hours to execute, hence disabling by default)
