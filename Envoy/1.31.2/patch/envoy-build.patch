@@ -1,5 +1,5 @@
 diff --git a/.bazelrc b/.bazelrc
-index 51f693e..ae15cb2 100644
+index 51f693e143..ae15cb2e78 100644
 --- a/.bazelrc
 +++ b/.bazelrc
 @@ -87,7 +87,7 @@ build:sanitizer --linkopt -ldl
@@ -39,7 +39,7 @@ index 51f693e..ae15cb2 100644
  build:clang-msan --copt -DMEMORY_SANITIZER=1
  build:clang-msan --test_env=MSAN_SYMBOLIZER_PATH
 diff --git a/api/bazel/repositories.bzl b/api/bazel/repositories.bzl
-index 8669544..6f2b9f6 100644
+index 8669544cdf..6f2b9f6550 100644
 --- a/api/bazel/repositories.bzl
 +++ b/api/bazel/repositories.bzl
 @@ -36,6 +36,8 @@ def api_dependencies():
@@ -52,22 +52,26 @@ index 8669544..6f2b9f6 100644
      external_http_archive(
          name = "rules_proto",
 diff --git a/bazel/repositories.bzl b/bazel/repositories.bzl
-index 42a2137221..2f7608d139 100644
+index 42a2137221..448c22fd3b 100644
 --- a/bazel/repositories.bzl
 +++ b/bazel/repositories.bzl
-@@ -262,7 +262,10 @@ def _boringssl_fips():
-         name = "boringssl_fips",
-         location_name = "boringssl",
-         build_file = "@envoy//bazel/external:boringssl_fips.BUILD",
--        patches = ["@envoy//bazel:boringssl_fips.patch"],
-+        patches = [
-+           "@envoy//bazel:boringssl_fips.patch",
-+           "@envoy//bazel:boringssl-s390x.patch",
-+        ],
-         patch_args = ["-p1"],
+@@ -255,8 +255,13 @@ def envoy_dependencies(skip_targets = []):
      )
  
-@@ -748,6 +748,8 @@ def _com_github_google_quiche():
+ def _boringssl():
+-    external_http_archive(name = "boringssl")
+-
++    external_http_archive(
++        name = "boringssl",
++        patch_args = ["-p1"],
++        patches = [
++            "@envoy//bazel:boringssl-s390x.patch",
++        ],
++    )
+ def _boringssl_fips():
+     external_http_archive(
+         name = "boringssl_fips",
+@@ -748,6 +753,8 @@ def _com_github_google_quiche():
      external_http_archive(
          name = "com_github_google_quiche",
          patch_cmds = ["find quiche/ -type f -name \"*.bazel\" -delete"],
@@ -76,24 +80,27 @@ index 42a2137221..2f7608d139 100644
          build_file = "@envoy//bazel/external:quiche.BUILD",
      )
  
-@@ -768,7 +770,7 @@ def _com_github_grpc_grpc():
+@@ -768,7 +775,10 @@ def _com_github_grpc_grpc():
      external_http_archive(
          name = "com_github_grpc_grpc",
          patch_args = ["-p1"],
 -        patches = ["@envoy//bazel:grpc.patch"],
-+        patches = ["@envoy//bazel:grpc.patch", "@envoy//bazel:grpc-s390x.patch"],
++        patches = [
++          "@envoy//bazel:grpc.patch",
++           "@envoy//bazel:grpc-s390x.patch",
++       ],
          # Needed until grpc updates its naming (v1.62.0)
          repo_mapping = {"@com_github_cncf_udpa": "@com_github_cncf_xds"},
      )
-@@ -844,6 +846,7 @@ def _proxy_wasm_cpp_host():
+@@ -844,6 +854,7 @@ def _proxy_wasm_cpp_host():
          patch_args = ["-p1"],
          patches = [
-             "@envoy//bazel:proxy_wasm_cpp_host.patch",
-+            "@envoy//bazel:proxy_wasm_cpp_host-s390x.patch",
+            "@envoy//bazel:proxy_wasm_cpp_host.patch",
++           "@envoy//bazel:proxy_wasm_cpp_host-s390x.patch",
          ],
      )
  
-@@ -861,7 +864,11 @@ def _com_github_luajit_luajit():
+@@ -861,7 +872,11 @@ def _com_github_luajit_luajit():
      external_http_archive(
          name = "com_github_luajit_luajit",
          build_file_content = BUILD_ALL_CONTENT,
@@ -106,7 +113,7 @@ index 42a2137221..2f7608d139 100644
          patch_args = ["-p1"],
          patch_cmds = ["chmod u+x build.py"],
      )
-@@ -980,7 +987,10 @@ def _rules_ruby():
+@@ -980,7 +995,10 @@ def _rules_ruby():
  def _foreign_cc_dependencies():
      external_http_archive(
          name = "rules_foreign_cc",
@@ -119,7 +126,7 @@ index 42a2137221..2f7608d139 100644
      )
  
 diff --git a/bazel/repositories_extra.bzl b/bazel/repositories_extra.bzl
-index 7a9d3bb..22daabc 100644
+index 7a9d3bbb53..b57b5bba73 100644
 --- a/bazel/repositories_extra.bzl
 +++ b/bazel/repositories_extra.bzl
 @@ -16,7 +16,7 @@ PYTHON_MINOR_VERSION = _python_minor_version(PYTHON_VERSION)
@@ -127,7 +134,7 @@ index 7a9d3bb..22daabc 100644
  def envoy_dependencies_extra(
          python_version = PYTHON_VERSION,
 -        ignore_root_user_error = False):
-+        ignore_root_user_error = True):        
++        ignore_root_user_error = True):
      bazel_features_deps()
      emsdk_deps()
      raze_fetch_remote_crates()
