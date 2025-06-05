@@ -712,7 +712,7 @@ index 481a65c97..782b71f5e 100644
                         return err
                 }
 -               secretLen := binary.LittleEndian.Uint16(secretLenBytes)
-+                var secretLen uint16
++               var secretLen uint16
 +               if cpu.IsBigEndian {
 +                       secretLen = binary.BigEndian.Uint16(secretLenBytes)
 +               } else {
