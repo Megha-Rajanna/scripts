@@ -696,29 +696,29 @@ index 2760f52ce..c61490d11 100644
  // The list above enumerates the platforms that BoringSSL supports. For these
  // platforms we keep a reasonable bar of not breaking them: automated test
 diff --git a/ssl/test/runner/runner.go b/ssl/test/runner/runner.go
-index 481a65c97..f6e6516d0 100644
+index e18bfd3fd..74179c38c 100644
 --- a/ssl/test/runner/runner.go
 +++ b/ssl/test/runner/runner.go
 @@ -49,6 +49,7 @@ import (
-        "boringssl.googlesource.com/boringssl/ssl/test/runner/hpke"
-        "boringssl.googlesource.com/boringssl/util/testresult"
-        "golang.org/x/crypto/cryptobyte"
-+       "golang.org/x/sys/cpu"
+ 	"boringssl.googlesource.com/boringssl/ssl/test/runner/hpke"
+ 	"boringssl.googlesource.com/boringssl/util/testresult"
+ 	"golang.org/x/crypto/cryptobyte"
++	"golang.org/x/sys/cpu"
  )
  
  var (
-@@ -999,7 +1000,13 @@ func doExchange(test *testCase, config *Config, conn net.Conn, isResume bool, tr
-                if _, err := io.ReadFull(tlsConn, secretLenBytes); err != nil {
-                        return err
-                }
--               secretLen := binary.LittleEndian.Uint16(secretLenBytes)
+@@ -989,7 +990,13 @@ func doExchange(test *testCase, config *Config, conn net.Conn, isResume bool, tr
+ 		if _, err := io.ReadFull(tlsConn, secretLenBytes); err != nil {
+ 			return err
+ 		}
+-		secretLen := binary.LittleEndian.Uint16(secretLenBytes)
 +
-+               var secretLen uint16
-+               if cpu.IsBigEndian {
-+                       secretLen = binary.BigEndian.Uint16(secretLenBytes)
-+               } else {
-+                       secretLen = binary.LittleEndian.Uint16(secretLenBytes)
-+               }
++		var secretLen uint16
++		if cpu.IsBigEndian {
++			secretLen = binary.BigEndian.Uint16(secretLenBytes)
++		} else {
++			secretLen = binary.LittleEndian.Uint16(secretLenBytes)
++		}
  
-                theirReadSecret := make([]byte, secretLen)
-                theirWriteSecret := make([]byte, secretLen)
+ 		theirReadSecret := make([]byte, secretLen)
+ 		theirWriteSecret := make([]byte, secretLen)
