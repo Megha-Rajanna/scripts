@@ -696,7 +696,7 @@ index 2760f52ce..c61490d11 100644
  // The list above enumerates the platforms that BoringSSL supports. For these
  // platforms we keep a reasonable bar of not breaking them: automated test
 diff --git a/ssl/test/runner/runner.go b/ssl/test/runner/runner.go
-index 481a65c97..782b71f5e 100644
+index 481a65c97..566ee1f9b 100644
 --- a/ssl/test/runner/runner.go
 +++ b/ssl/test/runner/runner.go
 @@ -49,6 +49,7 @@ import (
