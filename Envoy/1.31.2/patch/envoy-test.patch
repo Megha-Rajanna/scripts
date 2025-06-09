@@ -1,5 +1,5 @@
 diff --git a/source/common/network/io_socket_handle_impl.cc b/source/common/network/io_socket_handle_impl.cc
-index 2509e3f..1e7f411 100644
+index 2509e3fbd3..25a4ea512c 100644
 --- a/source/common/network/io_socket_handle_impl.cc
 +++ b/source/common/network/io_socket_handle_impl.cc
 @@ -1,5 +1,6 @@
@@ -9,10 +9,20 @@ index 2509e3f..1e7f411 100644
  #include <memory>
  
  #include "envoy/buffer/buffer.h"
-@@ -328,6 +329,37 @@ absl::optional<uint8_t> maybeGetTosFromHeader(const cmsghdr& cmsg) {
+@@ -296,7 +297,7 @@ template <typename T> T getUnsignedIntFromHeader(const cmsghdr& cmsg) {
+   safeMemcpyUnsafeSrc(&value, CMSG_DATA(&cmsg));
+   return value;
+ }
+-
++/*
+ template <typename T> absl::optional<T> maybeGetUnsignedIntFromHeader(const cmsghdr& cmsg) {
+   static_assert(std::is_unsigned_v<T>, "return type must be unsigned integral");
+   switch (cmsg.cmsg_len) {
+@@ -314,6 +315,24 @@ template <typename T> absl::optional<T> maybeGetUnsignedIntFromHeader(const cmsg
+       fmt::format("unexpected cmsg_len value for unsigned integer payload: {}", cmsg.cmsg_len));
    return absl::nullopt;
  }
- 
++*/
 +template <typename T> absl::optional<T> maybeGetUnsignedIntFromHeader(const cmsghdr& cmsg) {
 +  static_assert(std::is_unsigned_v<T>, "return type must be unsigned integral");
 +  switch (cmsg.cmsg_len) {
@@ -30,23 +40,9 @@ index 2509e3f..1e7f411 100644
 +      fmt::format("unexpected cmsg_len value for unsigned integer payload: {}", cmsg.cmsg_len));
 +  return absl::nullopt;
 +}
-+
-+absl::optional<uint8_t> maybeGetTosFromHeader(const cmsghdr& cmsg) {
-+  if (
-+#ifdef __APPLE__
-+      (cmsg.cmsg_level == IPPROTO_IP && cmsg.cmsg_type == IP_RECVTOS) ||
-+#else
-+      (cmsg.cmsg_level == IPPROTO_IP && cmsg.cmsg_type == IP_TOS) ||
-+#endif // __APPLE__
-+      (cmsg.cmsg_level == IPPROTO_IPV6 && cmsg.cmsg_type == IPV6_TCLASS)) {
-+    return maybeGetUnsignedIntFromHeader<uint8_t>(cmsg);
-+  }
-+  return absl::nullopt;
-+}
-+
- Api::IoCallUint64Result IoSocketHandleImpl::recvmsg(Buffer::RawSlice* slices,
-                                                     const uint64_t num_slice, uint32_t self_port,
-                                                     const UdpSaveCmsgConfig& save_cmsg_config,
+ 
+ absl::optional<uint8_t> maybeGetTosFromHeader(const cmsghdr& cmsg) {
+   if (
 diff --git a/source/extensions/common/wasm/context.cc b/source/extensions/common/wasm/context.cc
 index cc33da3..407609d 100644
 --- a/source/extensions/common/wasm/context.cc
